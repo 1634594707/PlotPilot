@@ -233,6 +233,14 @@ class ChapterService:
         if chapter is None:
             raise EntityNotFoundError("Chapter", f"{novel_id}/chapter-{chapter_number}")
 
+        # 使用数据库 repository；未装配时显式失败（先于章节状态落库校验，
+        # 避免出现"审阅未保存但章节状态已推进"的不一致）
+        if not self.chapter_review_repository:
+            raise RuntimeError(
+                "chapter_review_repository 未配置, 无法保存章节审阅结果 "
+                f"(novel={novel_id}, chapter={chapter_number})"
+            )
+
         # 同步更新章节状态：approved -> completed, reviewed -> reviewing
         status_to_chapter_status = {
             "approved": ChapterStatus.COMPLETED,
@@ -244,12 +252,6 @@ class ChapterService:
             chapter.status = new_chapter_status
             self.chapter_repository.save(chapter)
 
-        # 使用数据库 repository；未装配时显式失败，不伪造返回值
-        if not self.chapter_review_repository:
-            raise RuntimeError(
-                "chapter_review_repository 未配置，无法保存章节审阅结果 "
-                f"(novel={novel_id}, chapter={chapter_number})"
-            )
         return self.chapter_review_repository.upsert(
             novel_id, chapter_number, status=status, memo=memo
         )

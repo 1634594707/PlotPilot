@@ -4,7 +4,6 @@ import pytest
 from unittest.mock import patch, MagicMock
 import interfaces.api.dependencies as dependencies
 from application.paths import resolve_runtime_data_path
-from application.paths import resolve_runtime_data_path
 
 
 class TestGetVectorStore:

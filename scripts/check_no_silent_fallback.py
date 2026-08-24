@@ -32,6 +32,7 @@ FORBIDDEN_NAMES = {
 
 # 规则 B：except 块内禁止调用的函数名模式（旧接口回退）
 LEGACY_CALL_PREFIXES = ("legacy_", "run_legacy_")
+LEGACY_CALL_INFIXES = ("_legacy_",)
 LEGACY_CALL_EXACT = {
     "confirm_macro_plan",  # 旧版全量覆盖写入；safe 版为 confirm_macro_plan_safe
 }
@@ -103,6 +104,7 @@ def check_file(path: Path) -> list[str]:
                         continue
                     is_legacy = (
                         name.startswith(LEGACY_CALL_PREFIXES)
+                        or any(infix in name for infix in LEGACY_CALL_INFIXES)
                         or name in LEGACY_CALL_EXACT
                     )
                     if not is_legacy:

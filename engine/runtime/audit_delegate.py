@@ -397,6 +397,7 @@ async def run_chapter_audit(host: Any, novel: Novel) -> None:
             novel_id=novel.novel_id.value,
             label="aftermath_pipeline",
             timeout_default={"drift_alert": False, "similarity_score": None, "narrative_sync_ok": False, "vector_stored": False, "foreshadow_stored": False, "triples_extracted": False},
+            propagate_errors=True,  # 管线真实失败必须上抛（仅用户停止走默认值）
         )
         logger.info(
             f"[{novel.novel_id}] 章后管线完成: 相似度={drift_result.get('similarity_score')}, "

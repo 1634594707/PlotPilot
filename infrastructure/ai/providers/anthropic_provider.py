@@ -75,11 +75,9 @@ def _extract_text_from_content_block(block: Any) -> str:
 class AnthropicProvider(BaseProvider):
     """Anthropic LLM 提供商实现
 
-    使用 Anthropic API 实现 LLM 服务。
-
-    双端点策略：
-    - generate() (规划/分析): 使用官方 SDK，走官方 API (HTTPS)
-    - stream_generate() (正文生成): 使用自定义 httpx，走代理服务器
+    使用 Anthropic 官方 SDK 实现 LLM 服务：
+    - generate(): 非流式生成（SDK messages.create）
+    - stream_generate(): 流式生成（SDK messages.stream，唯一流式路径）
     """
 
     def __init__(self, settings: Settings):
