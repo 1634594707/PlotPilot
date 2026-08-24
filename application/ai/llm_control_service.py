@@ -61,9 +61,11 @@ class LLMProfile(BaseModel):
     @field_validator('max_tokens')
     @classmethod
     def _validate_max_tokens(cls, value: int) -> int:
+        # 仅要求正整数；不得把低于默认值的配置强制抬回默认——
+        # 部分模型上限较低，抬高会导致请求被上游拒绝（issue #206）
         if value <= 0:
             raise ValueError('value must be positive')
-        return max(value, DEFAULT_MAX_OUTPUT_TOKENS)
+        return value
 
     @field_validator('timeout_seconds')
     @classmethod
@@ -514,7 +516,8 @@ class LLMControlService:
                         'base_url': profile.base_url.strip(),
                         'api_key': profile.api_key.strip(),
                         'model': profile.model.strip(),
-                        'max_tokens': DEFAULT_MAX_OUTPUT_TOKENS,
+                        # max_tokens 由字段校验器保证为正整数并原样保留
+                        # （不得强制抬回默认值，issue #206）
                     }
                 )
             )
