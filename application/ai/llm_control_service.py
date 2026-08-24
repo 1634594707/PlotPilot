@@ -284,14 +284,14 @@ class LLMControlService:
         )
 
     def get_config(self) -> LLMControlConfig:
-        """从数据库读取完整配置；空库时自动写入初始默认值。"""
-        try:
-            rows = self._db().fetch_all(
-                "SELECT * FROM llm_profiles ORDER BY sort_order, created_at"
-            )
-        except Exception as exc:
-            logger.warning('读取 LLM profiles 失败，回退默认配置: %s', exc)
-            rows = []
+        """从数据库读取完整配置；空表时自动写入初始默认值。
+
+        读失败（表损坏/连接异常）≠ 空表：直接上抛，避免静默回退默认配置
+        覆盖用户已保存的档案。
+        """
+        rows = self._db().fetch_all(
+            "SELECT * FROM llm_profiles ORDER BY sort_order, created_at"
+        )
 
         profiles = [self._row_to_profile(r) for r in rows]
 

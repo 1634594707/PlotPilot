@@ -244,19 +244,14 @@ class ChapterService:
             chapter.status = new_chapter_status
             self.chapter_repository.save(chapter)
 
-        # 使用数据库 repository
-        if self.chapter_review_repository:
-            return self.chapter_review_repository.upsert(
-                novel_id, chapter_number, status=status, memo=memo
+        # 使用数据库 repository；未装配时显式失败，不伪造返回值
+        if not self.chapter_review_repository:
+            raise RuntimeError(
+                "chapter_review_repository 未配置，无法保存章节审阅结果 "
+                f"(novel={novel_id}, chapter={chapter_number})"
             )
-
-        # 降级：返回临时对象（不应该到达这里）
-        now = datetime.utcnow()
-        return ChapterReviewDTO(
-            status=status,
-            memo=memo,
-            created_at=now,
-            updated_at=now
+        return self.chapter_review_repository.upsert(
+            novel_id, chapter_number, status=status, memo=memo
         )
 
     def get_chapter_structure(

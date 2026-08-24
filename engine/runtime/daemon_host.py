@@ -1422,6 +1422,8 @@ class DaemonHostMixin:
         return current_content, current_result
 
 
+    # LEGACY(退役候选): 审计旧逻辑。仅在 aftermath_pipeline 未配置时作为显式配置分支
+    # 进入；章后管线运行中失败不再回退到此。删除条件：aftermath_pipeline 成为唯一配置。
     def _legacy_auditing_tasks_and_voice(
         self,
         novel: Novel,
@@ -1528,14 +1530,15 @@ class DaemonHostMixin:
         try:
             from infrastructure.persistence.database.connection import get_database
             from infrastructure.persistence.database.sqlite_narrative_event_repository import SqliteNarrativeEventRepository
+            from infrastructure.persistence.database.sqlite_character_state_repository import SqliteCharacterStateRepository
             from application.audit.services.macro_refactor_scanner import MacroRefactorScanner
             from application.audit.services.macro_diagnosis_service import MacroDiagnosisService
-            
+
             logger.info(f"[{novel_id}] 宏观诊断后台任务已启动")
-            
+
             db = get_database()
             narrative_event_repo = SqliteNarrativeEventRepository(db)
-            scanner = MacroRefactorScanner(narrative_event_repo)
+            scanner = MacroRefactorScanner(narrative_event_repo, SqliteCharacterStateRepository(db))
             diagnosis_service = MacroDiagnosisService(db, scanner)
             
             result = diagnosis_service.run_full_diagnosis(
