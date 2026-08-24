@@ -206,7 +206,21 @@ def test_app_factory_registers_legacy_and_api_routes(tmp_path):
     from interfaces.main import create_app
 
     app = create_app(BackendSettings(frontend_dir=tmp_path / "dist"))
-    routes = {route.path for route in app.routes}
+
+    def _collect_paths(routes):
+        """兼容新旧 Starlette：新版会把 include 的路由包成无 .path 的 _IncludedRouter。"""
+        paths = set()
+        for route in routes:
+            path = getattr(route, "path", None)
+            if path is not None:
+                paths.add(path)
+                continue
+            nested = getattr(route, "routes", None)
+            if nested:
+                paths |= _collect_paths(nested)
+        return paths
+
+    routes = _collect_paths(app.routes)
 
     assert "/" in routes
     assert "/health" in routes
